@@ -1,15 +1,11 @@
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "gaf"
 version = "0.1.0"
-description = "Gradient Agreement Filtering Package"
+description = "Gradient Agreement Filtering (GAF) Package"
 authors = [
   { name="Francois Chaubard", email="fchaubard@gmail.com" }
 ]
-license = "MIT"
+license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
