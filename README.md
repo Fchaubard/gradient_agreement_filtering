@@ -92,9 +92,9 @@ We provide two ways to easily incorporate GAF into your existing training.
    
 ## Examples
 
-# 1_cifar_100_train_loop_exposed.py: Gradient Agreement Filtering (GAF) with ResNet18 on CIFAR-100 with added noisy labels (used for the paper)
+# 1_cifar_100_train_loop_exposed.py
 
-This repository provides an implementation of **Gradient Agreement Filtering (GAF)** applied to training a ResNet18 model on the CIFAR-100 dataset using PyTorch. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
+This file uses **step_GAF()** to train a ResNet18 model on the CIFAR-100 dataset using PyTorch with the ability to add noise to the labels to monitor how GAF performs under noisy conditions. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
 
 Example call:
 ```
