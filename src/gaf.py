@@ -90,16 +90,36 @@ def step_GAF(model,
         dict: A dictionary containing loss, cosine_distance, and agreed_count.
     """
     model.train()
-
+    total_loss = 0
+    total_correct = 0
+                 
     # Compute gradients on the first microbatch
     G_current, loss, labels, outputs = _compute_gradients(list_of_microbatches[0], optimizer, model, criterion, device)
+    
+    # update total_loss
+    total_loss += loss * labels.size(0)
 
+    # update @1 accuracy
+    _, predicted = torch.max(outputs.data, 1)
+    correct_top1 = (predicted == labels).sum().item()
+    total_correct += correct_top1
+    
     # Fuse gradients with subsequent microbatches
     agreed_count = 0
+    
     for i, mb in enumerate(list_of_microbatches[1:]):
+        # compute microgradients and filter them based on cosine distance:
         G, loss_i, labels_i, outputs_i = _compute_gradients(mb, optimizer, model, criterion, device)
         G_current_temp, cosine_distance = _filter_gradients_cosine_sim(G_current, G, cos_distance_thresh)
+        
+        # update total_loss
+        total_loss += loss_i * labels_i.size(0)
 
+        # update @1 accuracy
+        _, predicted = torch.max(outputs_i.data, 1)
+        correct_top1 = (predicted == labels_i).sum().item()
+        total_correct += correct_top1
+        
         if verbose:
             print(f"GAF fuse iter {i}, Cosine Distance: {cosine_distance:.4f}")
 
@@ -115,7 +135,9 @@ def step_GAF(model,
         optimizer.step()
 
     # Compute metrics 
-    result = {'loss': loss.item(), 'cosine_distance': cosine_distance, 'agreed_count':agreed_count}
+    total = labels.size(0) * len(list_of_microbatches)
+    result = {'loss': total_loss.item(), 'cosine_distance': cosine_distance, 'agreed_count':agreed_count, 'train_accuracy':total_correct/total }
+                 
     if verbose:
         print(result)
 
@@ -132,7 +154,6 @@ def train_GAF(model,
               val_dataset,
               optimizer,
               criterion,
-              compute_metrics=None,
               wandb=False,
               verbose=True,
               cos_distance_thresh=1.0,
@@ -152,7 +173,6 @@ def train_GAF(model,
         val_dataset (torch.utils.data.Dataset): Validation dataset.
         optimizer (torch.optim.Optimizer): Optimizer to be used.
         criterion (torch.nn): Loss function to be used. 
-        compute_metrics (callable, optional): A function compute_metrics(preds, labels) -> dict.
         wandb (bool): Whether to log metrics to Weights & Biases.
         verbose (bool): Whether to print progress.
         cos_distance_thresh (float): Cosine distance threshold for GAF filtering. This is \tau in the paper. Must be between 0 and 2. We recommend 0.9 to 1 for an HPP sweep.
@@ -197,7 +217,6 @@ def train_GAF(model,
                               optimizer,
                               criterion,
                               list_of_microbatches=mbs,
-                              compute_metrics=compute_metrics,
                               wandb=wandb,
                               verbose=verbose,
                               cos_distance_thresh=cos_distance_thresh,
@@ -223,18 +242,17 @@ def train_GAF(model,
                 all_labels.extend(labels.cpu())
 
         val_loss /= max(val_count, 1)
-        metrics = {}
-        if compute_metrics:
-            metrics = compute_metrics(torch.tensor(all_preds), torch.tensor(all_labels))
 
+        val_accuracy = (all_preds == all_labels).sum().item() / all_preds.size(0)
+        message = {'epoch': epoch+1, 'train_loss': running_loss/max(count,1), 'val_loss': val_loss, 'train_accuracy': result['train_accuracy'], 'val_accuracy': val_accuracy}}
+        
         if verbose:
-            print(f"Epoch {epoch+1}/{args.epochs}, Train Loss: {running_loss/max(count,1):.4f}, Val Loss: {val_loss:.4f}, Metrics: {metrics}")
-
+            print(message)
         # log to wandb
         if wandb:
             try:
                 import wandb
-                wandb.log({'epoch': epoch+1, 'train_loss': running_loss/max(count,1), 'val_loss': val_loss, **metrics})
+                wandb.log(message)
             except Exception as e:
                 print(f"Failed to log to wandb: {e}")
 
