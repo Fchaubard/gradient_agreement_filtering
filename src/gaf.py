@@ -1,3 +1,23 @@
+"""
+Implementation of GAF in two methods.
+
+Method 1: step_GAF()
+Usage:
+    To be used inside a train loop in lieu of optimizer.step()
+
+Method 2: train_GAF()
+Usage:
+    To be used inside as the train loop in lieu of huggingface's trainer.train()
+
+For more information, see documentation below.
+
+Author:
+    Francois Chaubard 
+
+Date:
+    2024-12-03
+"""
+
 import torch
 from torch.utils.data import DataLoader, Subset
 import random
@@ -69,7 +89,7 @@ def step_GAF(model,
              optimizer, 
              criterion, 
              list_of_microbatches,
-             wandb=False,
+             wandb=True,
              verbose=True,
              cos_distance_thresh=1.0,
              device=torch.device('cpu')):
@@ -81,7 +101,7 @@ def step_GAF(model,
         optimizer (torch.optim.Optimizer): The optimizer.
         criterion (torch.nn.Module): The loss function.
         list_of_microbatches (list[Subset]): A list of data subsets (microbatches) for GAF.
-        wandb (bool): Whether to log metrics to Weights & Biases.
+        wandb (bool): Whether to log training metrics to Weights & Biases.
         verbose (bool): Whether to print debug information.
         cos_distance_thresh (float): Cosine distance threshold for filtering. This is \tau in the paper. Must be between 0 and 2. We recommend 0.9 to 1 for an HPP sweep.
         device (torch.device): Device on which to perform computation. TODO: You may want to distribute this across GPUs which we may implement later to be in parellel.
@@ -136,7 +156,7 @@ def step_GAF(model,
 
     # Compute metrics 
     total = labels.size(0) * len(list_of_microbatches)
-    result = {'loss': total_loss.item(), 'cosine_distance': cosine_distance, 'agreed_count':agreed_count, 'train_accuracy':total_correct/total }
+    result = {'train_loss': total_loss.item(), 'cosine_distance': cosine_distance, 'agreed_count':agreed_count, 'train_accuracy':total_correct/total }
                  
     if verbose:
         print(result)
@@ -154,7 +174,7 @@ def train_GAF(model,
               val_dataset,
               optimizer,
               criterion,
-              wandb=False,
+              wandb=True,
               verbose=True,
               cos_distance_thresh=1.0,
               device=torch.device('cpu')):
@@ -221,7 +241,7 @@ def train_GAF(model,
                               verbose=verbose,
                               cos_distance_thresh=cos_distance_thresh,
                               device=device)
-            running_loss += result['loss']
+            running_loss += result['train_loss']
             count += 1
 
         # Validation step
@@ -244,7 +264,7 @@ def train_GAF(model,
         val_loss /= max(val_count, 1)
 
         val_accuracy = (all_preds == all_labels).sum().item() / all_preds.size(0)
-        message = {'epoch': epoch+1, 'train_loss': running_loss/max(count,1), 'val_loss': val_loss, 'train_accuracy': result['train_accuracy'], 'val_accuracy': val_accuracy}}
+        message = {'epoch': epoch+1, 'train_loss': running_loss/max(count,1), 'val_loss': val_loss, 'train_accuracy': result['train_accuracy'], 'val_accuracy': val_accuracy}
         
         if verbose:
             print(message)
