@@ -15,9 +15,92 @@ TODO: Insert arxiv paper link.
 - Customizable hyperparameters via command-line arguments.
 - Logging and tracking with Weights & Biases (wandb).
 
-# Gradient Agreement Filtering (GAF) with ResNet18 on CIFAR-100
+
+## Requirements
+
+- Python 3.6 or higher
+- PyTorch 1.7 or higher
+- torchvision 0.8 or higher
+- numpy
+- wandb
+
+## Installation
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/<insert your username>/gradient_agreement_filtering.git
+   cd gradient_agreement_filtering
+   pip install .
+   ```
+
+## Usage
+
+We provide two ways to easily incorporate GAF into your existing training. 
+1. **step_GAF():**
+   If you want to use GAF inside your existing train loop, you can just replace your typical:
+
+   ```
+   optimizer.zero_grad()
+   outputs = model(batch)
+   loss = criterion(outputs, labels)
+   loss.backward()
+   optimizer.step()
+   ```
+   
+   with one call to step_GAF() as per below:
+   
+   ```
+   from gaf import step_GAF
+   ...
+   results = step_GAF(model, 
+             optimizer, 
+             criterion, 
+             list_of_microbatches,
+             wandb=True,
+             verbose=True,
+             cos_distance_thresh=0.97,
+             device=gpu_device)
+   ...
+   ```
+   
+2. **train_GAF():**
+
+   If you want to use GAF as the train loop, you can just replace your typical hugging face / keras style interface:
+
+   ```
+   trainer.Train()
+   ```
+   
+   with one call to train_GAF() as per below:
+   
+   ```
+   from gaf import train_GAF
+   ...
+   train_GAF(model,
+              args,
+              train_dataset,
+              val_dataset,
+              optimizer,
+              criterion,
+              wandb=True,
+              verbose=True,
+              cos_distance_thresh=0.97,
+              device=gpu_device)
+   ...
+   ```
+   
+## Examples
+
+# 1_cifar_100_train_loop_exposed.py: Gradient Agreement Filtering (GAF) with ResNet18 on CIFAR-100 with added noisy labels (used for the paper)
 
 This repository provides an implementation of **Gradient Agreement Filtering (GAF)** applied to training a ResNet18 model on the CIFAR-100 dataset using PyTorch. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
+
+Example call:
+```
+python examples/1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
+```
+
 
 # Gradient Agreement Filtering (GAF) with ResNet34 on CIFAR-100N-Fine
 ```
@@ -39,43 +122,6 @@ TODO:
 ```
 TODO:  
 ```
-
-
-## Requirements
-
-- Python 3.6 or higher
-- PyTorch 1.7 or higher
-- torchvision 0.8 or higher
-- numpy
-- wandb
-
-## Installation
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/your_username/gaf-cifar100.git
-   pip install .
-   ```
-
-## Usage
-
-1. **step_GAF():**
-
-   ```bash
-   git clone https://github.com/your_username/gaf-cifar100.git
-   pip install .
-   ```
-
-## Examples
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/your_username/gaf-cifar100.git
-   pip install .
-   ```
-
 
 
 ## Acknowledgement
