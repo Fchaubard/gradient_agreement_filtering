@@ -9,7 +9,7 @@ Usage:
     python 1_cifar_100_train_loop_exposed.py [OPTIONS]
 
 Example:
-    python 1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov" --learning_rate 0.01 --momentum 0.9 --nesterov True
+    python 1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True
 
 Author:
     Francois Chaubard 
@@ -58,11 +58,8 @@ parser = argparse.ArgumentParser(description='Train ResNet18 on CIFAR-100 with v
 parser.add_argument('--GAF', type=str2bool, default=True, help='Enable Gradient Agreement Filtering (True or False)')
 parser.add_argument('--learning_rate', type=float, default=0.01, help='Learning rate for the optimizer')
 parser.add_argument('--weight_decay', type=float, default=1e-2, help='Weight decay factor')
-parser.add_argument('--weight_decay_type', type=str, default='l2', choices=['l1', 'l2'], help='Type of weight decay to apply (l1 or l2)')
 parser.add_argument('--batch_size', type=int, default=128, help='Batch size for training')
 parser.add_argument('--num_val_epochs', type=int, default=2, help='Number of epochs between validation checks')
-parser.add_argument('--min_grad', type=float, default=0.0, help='Minimum gradient value for filtering in GAF')
-parser.add_argument('--epsilon', type=float, default=1e-1, help='Epsilon value for gradient agreement filtering')
 parser.add_argument('--optimizer', type=str, default='SGD', choices=optimizer_types, help='Optimizer type to use')
 parser.add_argument('--num_batches_to_force_agreement', type=int, default=10, help='Number of batches to compute gradients for agreement (must be > 1)')
 parser.add_argument('--epochs', type=int, default=10000, help='Total number of training epochs')
@@ -242,48 +239,38 @@ model = model.to(device)
 # Define the loss function (CrossEntropyLoss)
 criterion = nn.CrossEntropyLoss()
 
-# Handle weight decay and L1 regularization
-if config['weight_decay_type'] == 'l1':
-    weight_decay = 0.0
-    l1_lambda = config['weight_decay']
-elif config['weight_decay_type'] == 'l2':
-    weight_decay = config['weight_decay']
-    l1_lambda = 0.0
-else:
-    raise ValueError("weight_decay_type must be 'l1' or 'l2'")
-
 # Initialize the optimizer based on the selected type and parameters
 if config['optimizer'] == 'SGD':
     optimizer = optim.SGD(model.parameters(), lr=config['learning_rate'],
                           momentum=config['momentum'],
-                          weight_decay=weight_decay,
+                          weight_decay=config['weight_decay'],
                           nesterov=config['nesterov'])
 elif config['optimizer'] == 'SGD+Nesterov':
     optimizer = optim.SGD(model.parameters(), lr=config['learning_rate'],
                           momentum=config['momentum'],
-                          weight_decay=weight_decay,
+                          weight_decay=config['weight_decay'],
                           nesterov=True)
 elif config['optimizer'] == 'SGD+Nesterov+val_plateau':
     optimizer = optim.SGD(model.parameters(), lr=config['learning_rate'],
                           momentum=config['momentum'],
-                          weight_decay=weight_decay,
+                          weight_decay=config['weight_decay'],
                           nesterov=True)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=config['scheduler_patience'])
 elif config['optimizer'] == 'Adam':
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'],
                            betas=tuple(config['betas']),
                            eps=config['eps'],
-                           weight_decay=weight_decay)
+                           weight_decay=config['weight_decay'])
 elif config['optimizer'] == 'AdamW':
     optimizer = optim.AdamW(model.parameters(), lr=config['learning_rate'],
                             betas=tuple(config['betas']),
                             eps=config['eps'],
-                            weight_decay=weight_decay)
+                            weight_decay=config['weight_decay'])
 elif config['optimizer'] == 'RMSProp':
     optimizer = optim.RMSprop(model.parameters(), lr=config['learning_rate'],
                               alpha=config['alpha'],
                               eps=config['eps'],
-                              weight_decay=weight_decay,
+                              weight_decay=config['weight_decay'],
                               momentum=config['momentum'],
                               centered=config['centered'])
 else:
@@ -384,10 +371,6 @@ for epoch in range(config['epochs']):
             optimizer.zero_grad()
             outputs = model(images)
             loss = criterion(outputs, labels)
-            # L1 regularization if specified
-            if config['weight_decay_type'] == 'l1':
-                l1_norm = sum(p.abs().sum() for p in model.parameters())
-                loss = loss + l1_lambda * l1_norm
             loss.backward()
             optimizer.step()
             # Update metrics
