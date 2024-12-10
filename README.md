@@ -93,33 +93,28 @@ We provide two ways to easily incorporate GAF into your existing training.
 
 # 1_cifar_100_train_loop_exposed.py
 
-This file uses **step_GAF()** to train a ResNet18 model on the CIFAR-100 dataset using PyTorch with the ability to add noise to the labels to monitor how GAF performs under noisy conditions. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
+This file uses **step_GAF()** to train a ResNet18 model on the CIFAR-100 dataset using PyTorch with the ability to add noise to the labels to observe how GAF performs under noisy conditions. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
 
 Example call:
 ```
 python examples/1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
 ```
 
+# 2_cifar_100_trainer.py
+This file uses **train_GAF()** to train a ResNet18 model on the CIFAR-100 dataset using PyTorch just to show how it works. 
 
-# Gradient Agreement Filtering (GAF) with ResNet34 on CIFAR-100N-Fine
+Example call:
 ```
-TODO:
-```
-
-# Gradient Agreement Filtering (GAF) with ViT on ImageNet
-```
-TODO: 
+python examples/2_cifar_100_trainer.py 
 ```
 
-# Gradient Agreement Filtering (GAF) with Pythia on GSM8k
-```
-TODO:  
-```
+# 3_cifar_100N_train_loop_exposed.py
 
+This file uses **step_GAF()** to train a ResNet34 model on the CIFAR-100N-Fine dataset using PyTorch to observe how GAF performs under typical labeling noise. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
 
-# Gradient Agreement Filtering (GAF) with Pythia on GSM8k
+Example call:
 ```
-TODO:  
+python examples/3_cifar_100N_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
 ```
 
 
