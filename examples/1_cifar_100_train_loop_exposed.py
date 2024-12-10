@@ -6,10 +6,10 @@ This script allows for experimentation with different optimizers and GAF setting
 We expose the train loop to allow maximum flexibility. 
 
 Usage:
-    python 1_cifar_100_train_loop_exposed.py [OPTIONS]
+    python examples/1_cifar_100_train_loop_exposed.py [OPTIONS]
 
 Example:
-    python 1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True
+    python examples/1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
 
 Author:
     Francois Chaubard 
@@ -28,11 +28,12 @@ import random
 import wandb
 import os
 import argparse
+import time
 from gaf import step_GAF
 ####################################################################################################
 
-
-
+# Ensure to set your WandB API key as an environment variable or directly in the code
+os.environ["WANDB_API_KEY"] = ""
 
 
 def str2bool(v):
@@ -46,8 +47,7 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-# Ensure to set your WandB API key as an environment variable or directly in the code
-# os.environ["WANDB_API_KEY"] = "your_wandb_api_key_here"
+
 
 # Define the list of available optimizer types
 optimizer_types = ["SGD", "SGD+Nesterov", "SGD+Nesterov+val_plateau", "Adam", "AdamW", "RMSProp"]
@@ -61,7 +61,7 @@ parser.add_argument('--weight_decay', type=float, default=1e-2, help='Weight dec
 parser.add_argument('--batch_size', type=int, default=128, help='Batch size for training')
 parser.add_argument('--num_val_epochs', type=int, default=2, help='Number of epochs between validation checks')
 parser.add_argument('--optimizer', type=str, default='SGD', choices=optimizer_types, help='Optimizer type to use')
-parser.add_argument('--num_batches_to_force_agreement', type=int, default=10, help='Number of batches to compute gradients for agreement (must be > 1)')
+parser.add_argument('--num_batches_to_force_agreement', type=int, default=2, help='Number of batches to compute gradients for agreement (must be > 1)')
 parser.add_argument('--epochs', type=int, default=10000, help='Total number of training epochs')
 parser.add_argument('--num_samples_per_class_per_batch', type=int, default=1, help='Number of samples per class per batch when using GAF')
 parser.add_argument('--label_error_percentage', type=float, default=0, help='Percentage of labels to flip in the training dataset to simulate label noise (between 0 and 1)')
@@ -74,7 +74,8 @@ parser.add_argument('--betas', type=float, nargs=2, default=(0.9, 0.999), help='
 parser.add_argument('--eps', type=float, default=1e-8, help='Epsilon value for optimizers')
 parser.add_argument('--alpha', type=float, default=0.99, help='Alpha value for RMSProp optimizer')
 parser.add_argument('--centered', type=str2bool, default=False, help='Centered RMSProp (True or False)')
-parser.add_argument('--scheduler_patience', type=int, default=10, help='Patience for ReduceLROnPlateau scheduler')
+parser.add_argument('--scheduler_patience', type=int, default=100, help='Patience for ReduceLROnPlateau scheduler')
+parser.add_argument('--scheduler_factor', type=int, default=0.1, help='Discount factor for ReduceLROnPlateau scheduler')
 
 # logging
 parser.add_argument('--wandb', type=str2bool, default=False, help='Log to wandb (True or False)')
@@ -86,13 +87,13 @@ config = vars(args)
 
 # Set unused optimizer-specific configs to 'NA'
 optimizer = config['optimizer']
-all_params = ['momentum', 'nesterov', 'betas', 'eps', 'alpha', 'centered', 'scheduler_patience']
+all_params = ['momentum', 'nesterov', 'betas', 'eps', 'alpha', 'centered', 'scheduler_patience', 'scheduler_factor']
 
 # Define which parameters are used by each optimizer
 optimizer_params = {
     'SGD': ['momentum', 'nesterov'],
     'SGD+Nesterov': ['momentum', 'nesterov'],
-    'SGD+Nesterov+val_plateau': ['momentum', 'nesterov', 'scheduler_patience'],
+    'SGD+Nesterov+val_plateau': ['momentum', 'nesterov', 'scheduler_patience', 'scheduler_factor'],
     'Adam': ['betas', 'eps'],
     'AdamW': ['betas', 'eps'],
     'RMSProp': ['momentum', 'eps', 'alpha', 'centered'],
@@ -200,14 +201,15 @@ def flip_labels(train_dataset, label_error_percentage=0.1, num_classes=100):
 
     return train_dataset
 
-def sample_iid_mbs_for_GAF(full_dataset, class_indices, n):
+def sample_iid_mbs_for_GAF(full_dataset, class_indices, n, m):
     """
-    Samples 'n' independent minibatches, each containing an equal number of samples from each class.
+    Samples 'n' independent minibatches, each containing an equal number of samples from each class, m.
 
     Args:
         full_dataset (Dataset): The full training dataset.
         class_indices (dict): A mapping from class labels to data indices.
-        n (int): The number of minibatches to sample.
+        n (int): The number of microbatches to sample.
+        m (int): The number of images per class to sample per microbatch.
 
     Returns:
         list: A list of Subsets representing the minibatches.
@@ -215,7 +217,7 @@ def sample_iid_mbs_for_GAF(full_dataset, class_indices, n):
     # Initialize a list to hold indices for each batch
     batch_indices_list = [[] for _ in range(n)]
     for cls in class_indices:
-        num_samples_per_class = 1  # Adjust if you want more samples per class per batch
+        num_samples_per_class = m  # Adjust if you want more samples per class per batch
         total_samples_needed = num_samples_per_class * n
         available_indices = class_indices[cls]
         # Ensure there are enough indices
@@ -255,7 +257,7 @@ elif config['optimizer'] == 'SGD+Nesterov+val_plateau':
                           momentum=config['momentum'],
                           weight_decay=config['weight_decay'],
                           nesterov=True)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=config['scheduler_patience'])
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=config['scheduler_patience'],  factor=config['scheduler_factor'])
 elif config['optimizer'] == 'Adam':
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'],
                            betas=tuple(config['betas']),
@@ -338,6 +340,7 @@ for epoch in range(config['epochs']):
     running_loss = 0.0
     correct_top1 = 0
     total = 0
+    i=0
     
     # Calculate total iterations per epoch
     if config['GAF']:
@@ -345,19 +348,17 @@ for epoch in range(config['epochs']):
     else:
         iterations_per_epoch = len(train_dataset) // config['batch_size']
 
-    while iteration < iterations_per_epoch:
+    while i < iterations_per_epoch:
+        i+=1
         if config['GAF']:
             # Sample microbatches for GAF
-            mbs = sample_iid_mbs_for_GAF(train_dataset, class_indices, config['num_batches_to_force_agreement'])
+            mbs = sample_iid_mbs_for_GAF(train_dataset, class_indices, config['num_batches_to_force_agreement'], config['num_samples_per_class_per_batch'])
             # Run GAF to update the model
-            result = step_GAF(model, optimizer, criterion, mbs, compute_metrics=compute_metrics, wandb=config['wandb'], verbose=config['verbose'], device=device)
+            result = step_GAF(model, optimizer, criterion, mbs, wandb=config['wandb'], verbose=config['verbose'], device=device)
             
-      
-            if config['verbose']:
-               print(result)
 
             # # Update metrics
-            running_loss += result['loss'].item() / (len(class_indices)*config['num_batches_to_force_agreement'])
+            running_loss += result['train_loss'] / (len(class_indices)*config['num_batches_to_force_agreement'])
             total += 1
             correct_top1 += result['train_accuracy'] 
 
@@ -373,11 +374,26 @@ for epoch in range(config['epochs']):
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
+
             # Update metrics
             running_loss += loss.item() * images.size(0)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct_top1 += (predicted == labels).sum().item()
+
+            # print for baseline 
+            message = {'train_loss': loss.item(),
+                      'train_accuracy': (predicted == labels).sum().item() / labels.size(0),
+                      'iteration': iteration}
+            
+            # Log metrics to wandb
+            if config['wandb']:
+              try:
+                  wandb.log(message)
+              except Exception as e:
+                  print(f"Failed to log to wandb: {e}")
+            if config['verbose']:
+              print(message)
 
         iteration += 1
 
@@ -389,35 +405,34 @@ for epoch in range(config['epochs']):
       
         # Evaluate on the validation/test set
         val_loss, val_accuracy = evaluate(model, test_loader, device)
-        
-        # Log metrics to wandb
-        if config['wandb']:
-          try:
-              wandb.log({
-                  'train_loss': train_loss,
+        message = {'train_loss': train_loss,
                   'train_accuracy': train_accuracy,
                   'val_loss': val_loss,
                   'val_accuracy': val_accuracy,
                   'epoch': epoch,
-                  'iteration': iteration,
-              })
+                  'iteration': iteration}
+        # Log metrics to wandb
+        if config['wandb']:
+          try:
+              wandb.log(message)
           except Exception as e:
               print(f"Failed to log to wandb: {e}")
         if config['verbose']:
-          print(f"Epoch [{epoch+1}/{config['epochs']}], Iteration [{iteration}], "
-              f"Train Loss: {train_loss:.4f}, Train Acc: {train_accuracy*100:.2f}%, "
-              f"Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy*100:.2f}%")
+          print(message)
         # Reset running metrics
         running_loss = 0.0
         correct_top1 = 0
         total = 0
         # Save the latest checkpoint
-        checkpoint_name = f"{run_name}.pt"
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        checkpoint_name = f"{timestamp}.pt"
+
         checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
         try:
             torch.save(model.state_dict(), checkpoint_path)
         except Exception as e:
             print(f"Failed to save checkpoint: {e}")
+            
         # Adjust learning rate if scheduler is used
         if config['optimizer'] == 'SGD+Nesterov+val_plateau':
             scheduler.step(val_loss)
