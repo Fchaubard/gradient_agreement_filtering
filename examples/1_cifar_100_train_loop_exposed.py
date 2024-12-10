@@ -370,9 +370,9 @@ for epoch in range(config['epochs']):
                print(result)
 
             # # Update metrics
-            running_loss += result['loss'].item()
-            total +=  len(class_indices)*config['num_batches_to_force_agreement']
-            correct_top1 += result['correct_top1'] 
+            running_loss += result['loss'].item() / (len(class_indices)*config['num_batches_to_force_agreement'])
+            total += 1
+            correct_top1 += result['train_accuracy'] 
 
         else:
             # Sample a minibatch for standard training
