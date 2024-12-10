@@ -354,7 +354,7 @@ for epoch in range(config['epochs']):
             # Sample microbatches for GAF
             mbs = sample_iid_mbs_for_GAF(train_dataset, class_indices, config['num_batches_to_force_agreement'], config['num_samples_per_class_per_batch'])
             # Run GAF to update the model
-            result = step_GAF(model, optimizer, criterion, mbs, wandb=config['wandb'], verbose=config['verbose'], device=device)
+            result = step_GAF(model, optimizer, criterion, mbs, wandb=config['wandb'], verbose=config['verbose'], cos_distance_thresh=config['cos_distance_thresh'], device=device)
             
 
             # # Update metrics
