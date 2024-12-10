@@ -112,6 +112,17 @@ def step_GAF(model,
     model.train()
     total_loss = 0
     total_correct = 0
+    
+    # Check if wandb is imported
+    if wandb:
+        import os
+        import wandb
+
+        # Check if the WANDB_API key is in the environment variables
+        wandb_api_key = os.getenv('WANDB_API_KEY')
+        if not wandb_api_key:
+            raise RuntimeError("No WandB API key provided. Please set the 'WANDB_API' environment variable.")
+
                  
     # Compute gradients on the first microbatch
     G_current, loss, labels, outputs = _compute_gradients(list_of_microbatches[0], optimizer, model, criterion, device)
@@ -202,7 +213,17 @@ def train_GAF(model,
         None
     """
     model.to(device)
-    
+
+    # Check if wandb is imported
+    if wandb:
+        import os
+        import wandb
+
+        # Check if the WANDB_API key is in the environment variables
+        wandb_api_key = os.getenv('WANDB_API_KEY')
+        if not wandb_api_key:
+            raise RuntimeError("No WandB API key provided. Please set the 'WANDB_API' environment variable.")
+
     # Create dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
