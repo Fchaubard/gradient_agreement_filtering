@@ -284,7 +284,7 @@ def train_GAF(model,
 
         val_loss /= max(val_count, 1)
 
-        val_accuracy = (all_preds == all_labels).sum().item() / all_preds.size(0)
+        val_accuracy = sum([pred == label for pred, label in zip(all_preds, all_labels)]) / len(all_preds)
         message = {'epoch': epoch+1, 'train_loss': running_loss/max(count,1), 'val_loss': val_loss, 'train_accuracy': result['train_accuracy'], 'val_accuracy': val_accuracy}
         
         if verbose:
