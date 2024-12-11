@@ -22,7 +22,7 @@ import os
 import time
 from argparse import Namespace
 
-from gaf import train_GAF
+from gradient_agreement_filtering import train_GAF
 
 # Ensure to set your WandB API key as an environment variable or directly in the code
 # os.environ["WANDB_API_KEY"] = "your_wandb_api_key_here"
