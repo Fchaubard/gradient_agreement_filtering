@@ -40,11 +40,13 @@ We provide two ways to easily incorporate GAF into your existing training.
    If you want to use GAF inside your existing train loop, you can just replace your typical:
 
    ```
+   ...
    optimizer.zero_grad()
    outputs = model(batch)
    loss = criterion(outputs, labels)
    loss.backward()
    optimizer.step()
+   ...
    ```
    
    with one call to step_GAF() as per below:
