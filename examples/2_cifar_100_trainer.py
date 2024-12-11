@@ -1,7 +1,15 @@
 import torch
 import torch.nn as nn
 from torchvision import datasets, transforms, models
+import torch.optim as optim
+from torch.utils.data import DataLoader, Subset
+import numpy as np
+import random
+import wandb
+import os
+import time
 from argparse import Namespace
+
 from gaf import train_GAF
 
 # Ensure to set your WandB API key as an environment variable or directly in the code
@@ -53,6 +61,15 @@ optimizer = optim.SGD(model.parameters(),
 
 criterion = nn.CrossEntropyLoss()
 
+if wandb:
+  # Set up WandB project and run names
+  model_name = 'ResNet18'
+  dataset_name = 'CIFAR100'
+  project_name = f"{model_name}_{dataset_name}_FLIPPED_LABELS_COSINE_SIM"
+  run_name = f"example_run"
+  wandb.init(project=project_name, name=run_name, config=args)
+
+
 train_GAF(model,
           args,
           train_dataset,
@@ -61,5 +78,5 @@ train_GAF(model,
           criterion,
           wandb=args.wandb,
           verbose=args.verbose,
-          cos_distance_thresh=args.cos_distance_thresh,
+          cos_distance_thresh=args.cos_distance_thresh, 
           device=device)
