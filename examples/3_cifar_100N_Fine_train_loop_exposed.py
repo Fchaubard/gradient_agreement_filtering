@@ -29,7 +29,7 @@ import wandb
 import os
 import argparse
 import time
-from gaf import step_GAF
+from gradient_agreement_filtering import step_GAF
 ####################################################################################################
 
 # Ensure to set your WandB API key as an environment variable or directly in the code
