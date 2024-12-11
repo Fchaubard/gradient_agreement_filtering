@@ -1,3 +1,15 @@
+"""
+Script to train ResNet18 on CIFAR-100 with Gradient Agreement Filtering (GAF) with test_GAF().
+
+Usage:
+    python examples/2_cifar_100_trainer.py 
+
+Author:
+    Francois Chaubard 
+
+Date:
+    2024-12-03
+"""
 import torch
 import torch.nn as nn
 from torchvision import datasets, transforms, models
