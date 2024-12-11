@@ -52,7 +52,7 @@ We provide two ways to easily incorporate GAF into your existing training.
    with one call to step_GAF() as per below:
    
    ```
-   from gaf import step_GAF
+   from gradient_agreement_filtering import step_GAF
    ...
    results = step_GAF(model, 
              optimizer, 
@@ -76,7 +76,7 @@ We provide two ways to easily incorporate GAF into your existing training.
    with one call to train_GAF() as per below:
    
    ```
-   from gaf import train_GAF
+   from gradient_agreement_filtering import train_GAF
    ...
    train_GAF(model,
               args,
