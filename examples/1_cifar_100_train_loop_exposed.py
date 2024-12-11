@@ -33,7 +33,7 @@ from gradient_agreement_filtering import step_GAF
 ####################################################################################################
 
 # Ensure to set your WandB API key as an environment variable or directly in the code
-os.environ["WANDB_API_KEY"] = ""
+# os.environ["WANDB_API_KEY"] = ""
 
 
 def str2bool(v):
