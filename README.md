@@ -91,6 +91,23 @@ We provide two ways to easily incorporate GAF into your existing training.
    
 ## Examples
 
+### NOTE: running with wandb
+For all of the scripts below, if you want to run with wandb, you can either fill in the:
+```
+python examples/1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
+```
+Or you can prepend any of the calls below with:
+```
+os.environ["WANDB_API_KEY"] = "<your-wandb-api-key>"
+```
+Or you can login on the system first then run the .py via:
+```
+wandb login <your-wandb-api-key>
+```
+Or you can run without it. Choice is yours.
+
+Now please review the examples below.
+
 ### 1_cifar_100_train_loop_exposed.py
 
 This file uses **step_GAF()** to train a ResNet18 model on the CIFAR-100 dataset using PyTorch with the ability to add noise to the labels to observe how GAF performs under noisy conditions. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
@@ -114,7 +131,7 @@ This file uses **step_GAF()** to train a ResNet34 model on the CIFAR-100N-Fine d
 
 Example call:
 ```
-python examples/3_cifar_100N_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
+python examples/3_cifar_100N_Fine_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau"  --cifarn True --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 2 --num_batches_to_force_agreement 2 --cos_distance_thresh 0.97
 ```
 
 
