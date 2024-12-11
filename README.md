@@ -26,12 +26,17 @@ TODO: Insert arxiv paper link.
 
 ## Installation
 
-
+   You can install via:
    ```bash
    git clone https://github.com/<insert your username>/gradient_agreement_filtering.git
    cd gradient_agreement_filtering
    pip install .
    ```
+   or via pip:
+   ```
+   pip install gradient-agreement-filtering
+   ```
+   
 
 ## Usage
 
