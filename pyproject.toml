@@ -7,13 +7,33 @@ authors = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
-  "torch",
-  "torchvision",
-  "numpy"
+  "torch>=2.5.0",
+  "torchvision>=0.20.1",
+  "numpy>=2.2.0",
+]
+
+# Add dev dependencies
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "wandb>=0.19.0",
+]
+
+all = [
+    "wandb>=0.19.0",
 ]
 
 [tool.setuptools]
-package-dir = {"" = "src"}
-py-modules = ["gradient_agreement_filtering"]
+py-modules = ['gradient_agreement_filtering']
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]
+
+[project.urls]
+Homepage = "https://github.com/Fchaubard/gradient_agreement_filtering"
