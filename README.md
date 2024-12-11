@@ -96,11 +96,11 @@ We provide two ways to easily incorporate GAF into your existing training.
 ### NOTE: running with wandb
 For all of the scripts below, if you want to run with wandb, you can either fill in the:
 ```
-python examples/1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
+os.environ["WANDB_API_KEY"] = "<your-wandb-api-key>"
 ```
 Or you can prepend any of the calls below with:
 ```
-os.environ["WANDB_API_KEY"] = "<your-wandb-api-key>"
+WANDB_API_KEY=<your-wandb-api-key> python *.py 
 ```
 Or you can login on the system first then run the .py via:
 ```
