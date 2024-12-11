@@ -1,5 +1,5 @@
 [project]
-name = "gaf"
+name = "gradient_agreement_filtering"
 version = "0.1.0"
 description = "Gradient Agreement Filtering (GAF) Package"
 authors = [
@@ -16,4 +16,4 @@ dependencies = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-py-modules = ["gaf"]
+py-modules = ["gradient_agreement_filtering"]
