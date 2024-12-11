@@ -67,7 +67,7 @@ parser.add_argument('--num_samples_per_class_per_batch', type=int, default=1, he
 parser.add_argument('--cos_distance_thresh', type=float, default=1, help='Threshold for cosine distance in gradient agreement filtering. Tau in the paper.')
 parser.add_argument('--dummy', type=bool, default=False, help='if we should use dummy data or not')
 parser.add_argument('--cifarn', type=bool, default=True, help='if we should use CIFARN labels or not')
-parser.add_argument('--cifarn_noisy_data_file_path', type=str, default="~/examples/CIFAR-100_human.pt", help='the path to the noisy labeling file')
+parser.add_argument('--cifarn_noisy_data_file_path', type=str, default="./examples/CIFAR-100_human.pt", help='the path to the noisy labeling file')
 
 # Optimizer-specific parameters
 parser.add_argument('--momentum', type=float, default=0.0, help='Momentum factor for SGD and RMSProp optimizers')
