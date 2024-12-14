@@ -7,41 +7,61 @@ GAF is a novel optimization algorithm that improves gradient-based optimization 
 TODO: Insert arxiv paper link.
 ```
 
-## Repo Features
+## Features
 
-- Supports multiple optimizers: SGD, SGD with Nesterov momentum, Adam, AdamW, RMSProp.
+The package provides a number of features for the example implementation of GAF. Specifically, it:
+
 - Implements Gradient Agreement Filtering based on cosine distance. 
-- Allows for label noise injection by flipping a percentage of labels.
-- Customizable hyperparameters via command-line arguments.
-- Logging and tracking with Weights & Biases (wandb).
-
-
-## Requirements
-
-- Python 3.6 or higher
-- PyTorch 1.7 or higher
-- torchvision 0.8 or higher
-- numpy
-- wandb
+- Supports multiple optimizers: SGD, SGD with Nesterov momentum, Adam, AdamW, RMSProp.
+- Provides examples on application of GAF in training image classifiers on CIFAR-100 and CIFAR-100N-Fine datasets.
+   - Allows for label noise injection by flipping a percentage of labels.
+   - Customizable hyperparameters via command-line arguments.
+   - Logging and tracking with [Weights & Biases (wandb)](https://wandb.ai/).
 
 ## Installation
 
-   You can install via:
-   ```bash
-   git clone https://github.com/<insert your username>/gradient_agreement_filtering.git
-   cd gradient_agreement_filtering
-   pip install .
-   ```
-   or via pip:
-   ```
-   pip install gradient-agreement-filtering
-   ```
+There are a few ways to install the package and run the examples.
+
+**Local Installation**
+
+To install the package and run the examples locally you can execute the following commands:
+
+You can install via:
+```bash
+git clone https://github.com/Fchaubard/gradient_agreement_filtering.git
+cd gradient_agreement_filtering
+pip install .
+```
+
+If you wish to install with wandb, for the last step instead use
+
+```bash
+pip install ".[all]"
+```
+
+**Local Installation (Development)** If you wish to install the package with added
+development dependencies, you can execute the following commands:
+
+```bash
+```bash
+git clone https://github.com/Fchaubard/gradient_agreement_filtering.git
+cd gradient_agreement_filtering
+pip install ".[dev]"
+```
+
+**PyPI Installation**
+
+If you only with to take advantage of the package and not the examples, you can install the package via PyPI:
+
+```bash
+pip install gradient-agreement-filtering
+```
    
 
 ## Usage
 
 We provide two ways to easily incorporate GAF into your existing training. 
-1. **step_GAF():**
+1. `step_GAF()`:
    If you want to use GAF inside your existing train loop, you can just replace your typical:
 
    ```
@@ -70,7 +90,7 @@ We provide two ways to easily incorporate GAF into your existing training.
    ...
    ```
    
-2. **train_GAF():**
+2. `train_GAF()`:
 
    If you want to use GAF as the train loop, you can just replace your typical hugging face / keras style interface:
 
@@ -96,36 +116,42 @@ We provide two ways to easily incorporate GAF into your existing training.
    ...
    ```
    
-## Examples
+### NOTE: Running with wandb
 
-### NOTE: running with wandb
-For all of the scripts below, if you want to run with wandb, you can either fill in the:
-```
-os.environ["WANDB_API_KEY"] = "<your-wandb-api-key>"
-```
-Or you can prepend any of the calls below with:
-```
-WANDB_API_KEY=<your-wandb-api-key> python *.py 
-```
-Or you can login on the system first then run the .py via:
-```
+If you want to run with wandb, you will need to set your WANDB_API_KEY. You can do this in a few ways:
+
+1. You can login on the system first then run the .py via:
+```bash
 wandb login <your-wandb-api-key>
 ```
-Or you can run without it. Choice is yours.
 
-Now please review the examples below.
+2. Add the following line to the top of your .py file:
+
+```python
+os.environ["WANDB_API_KEY"] = "<your-wandb-api-key>"
+```
+
+3. Or you can prepend any of the calls below with:
+
+```bash
+WANDB_API_KEY=<your-wandb-api-key> python *.py 
+```
+
+## Examples
+
+We provide three examples to demonstrate the use of GAF in training image classifiers on CIFAR-100 and CIFAR-100N-Fine datasets.
 
 ### 1_cifar_100_train_loop_exposed.py
 
-This file uses **step_GAF()** to train a ResNet18 model on the CIFAR-100 dataset using PyTorch with the ability to add noise to the labels to observe how GAF performs under noisy conditions. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
+This file uses `step_GAF()` to train a ResNet18 model on the CIFAR-100 dataset using PyTorch with the ability to add noise to the labels to observe how GAF performs under noisy conditions. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
 
 Example call:
-```
+```bash
 python examples/1_cifar_100_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau" --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 1 --num_batches_to_force_agreement 2 --label_error_percentage 0.15 --cos_distance_thresh 0.97
 ```
 
 ### 2_cifar_100_trainer.py
-This file uses **train_GAF()** to train a ResNet18 model on the CIFAR-100 dataset using PyTorch just to show how it works. 
+This file uses `train_GAF()` to train a ResNet18 model on the CIFAR-100 dataset using PyTorch just to show how it works. 
 
 Example call:
 ```
@@ -134,10 +160,10 @@ python examples/2_cifar_100_trainer.py
 
 ### 3_cifar_100N_train_loop_exposed.py
 
-This file uses **step_GAF()** to train a ResNet34 model on the CIFAR-100N-Fine dataset using PyTorch to observe how GAF performs under typical labeling noise. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
+This file uses `step_GAF()` to train a ResNet34 model on the CIFAR-100N-Fine dataset using PyTorch to observe how GAF performs under typical labeling noise. The code supports various optimizers and configurations, allowing you to experiment with different settings to understand the impact of GAF on model training.
 
 Example call:
-```
+```bash
 python examples/3_cifar_100N_Fine_train_loop_exposed.py --GAF True --optimizer "SGD+Nesterov+val_plateau"  --cifarn True --learning_rate 0.01 --momentum 0.9 --nesterov True --wandb True --verbose True --num_samples_per_class_per_batch 2 --num_batches_to_force_agreement 2 --cos_distance_thresh 0.97
 ```
 
@@ -148,11 +174,6 @@ To cite this work, please use the following BibTeX entry:
 
 ```
 TODO
-```
-
-# Citing GAF
-```
-Insert bibtex
 ```
 
 ## License

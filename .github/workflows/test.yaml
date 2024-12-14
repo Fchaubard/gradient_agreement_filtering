@@ -1,0 +1,45 @@
+name: Unit
+
+# Run on pushes to main branch
+on:
+    push:
+      branches:
+        - main  
+
+
+jobs:
+    test:
+        # Test Python 3.11 and above
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            version: [3.11, 3.12]
+
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          - name: Set up Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: ${{ matrix.version }}
+
+          - name: Install dependencies
+            run: |
+              pip install -U pip
+              pip install -e ".[dev]"
+              pip install coverage coveralls  # Install coverage and coveralls libraries
+
+          - name: Run tests with coverage
+            run: |
+              coverage run -m pytest  # Adjust this command if you're using a different test runner
+
+        # Uncomment the following steps if you want to generate a coverage report and upload it to Coveralls
+
+        #   - name: Generate coverage report
+        #     run: coverage report
+
+        #   - name: Upload coverage to Coveralls
+        #     env:
+        #       COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}  # Add your Coveralls token to repository secrets
+        #     run: coveralls

@@ -89,7 +89,6 @@ def step_GAF(model,
              optimizer, 
              criterion, 
              list_of_microbatches,
-             wandb=True,
              verbose=True,
              cos_distance_thresh=1.0,
              device=torch.device('cpu')):
@@ -101,7 +100,6 @@ def step_GAF(model,
         optimizer (torch.optim.Optimizer): The optimizer.
         criterion (torch.nn.Module): The loss function.
         list_of_microbatches (list[Subset]): A list of data subsets (microbatches) for GAF.
-        wandb (bool): Whether to log training metrics to Weights & Biases.
         verbose (bool): Whether to print debug information.
         cos_distance_thresh (float): Cosine distance threshold for filtering. This is \tau in the paper. Must be between 0 and 2. We recommend 0.9 to 1 for an HPP sweep.
         device (torch.device): Device on which to perform computation. TODO: You may want to distribute this across GPUs which we may implement later to be in parellel.
@@ -112,17 +110,6 @@ def step_GAF(model,
     model.train()
     total_loss = 0
     total_correct = 0
-    
-    # Check if wandb is imported
-    if wandb:
-        import os
-        import wandb
-
-        # Check if the WANDB_API key is in the environment variables
-        wandb_api_key = os.getenv('WANDB_API_KEY')
-        if not wandb_api_key:
-            raise RuntimeError("No WandB API key provided. Please set the 'WANDB_API' environment variable.")
-
                  
     # Compute gradients on the first microbatch
     G_current, loss, labels, outputs = _compute_gradients(list_of_microbatches[0], optimizer, model, criterion, device)
@@ -152,7 +139,7 @@ def step_GAF(model,
         total_correct += correct_top1
         
         if verbose:
-            print(f"GAF fuse iter {i}, Cosine Distance: {cosine_distance:.4f}")
+            print(f"Gradient fusion iteration {i+1}/{len(list_of_microbatches)-1}, Cosine Distance: {cosine_distance:.4f}")
 
         if G_current_temp is not None:
             G_current = G_current_temp
@@ -168,14 +155,6 @@ def step_GAF(model,
     # Compute metrics 
     total = labels.size(0) * len(list_of_microbatches)
     result = {'train_loss': total_loss.item(), 'cosine_distance': cosine_distance, 'agreed_count':agreed_count, 'train_accuracy':total_correct/total }
-                 
-    if verbose:
-        print(result)
-
-    # Log to wandb
-    if wandb:
-        import wandb
-        wandb.log(result)
 
     return result
 
@@ -185,7 +164,7 @@ def train_GAF(model,
               val_dataset,
               optimizer,
               criterion,
-              wandb=True,
+              use_wandb=True,
               verbose=True,
               cos_distance_thresh=1.0,
               device=torch.device('cpu')):
@@ -204,7 +183,7 @@ def train_GAF(model,
         val_dataset (torch.utils.data.Dataset): Validation dataset.
         optimizer (torch.optim.Optimizer): Optimizer to be used.
         criterion (torch.nn): Loss function to be used. 
-        wandb (bool): Whether to log metrics to Weights & Biases.
+        use_wandb (bool): Whether to log metrics to Weights & Biases.
         verbose (bool): Whether to print progress.
         cos_distance_thresh (float): Cosine distance threshold for GAF filtering. This is \tau in the paper. Must be between 0 and 2. We recommend 0.9 to 1 for an HPP sweep.
         device (torch.device): Device on which to train on. TODO: Make this an array in future iters size at most num_batches_to_force_agreement to run them in parallel.
@@ -215,14 +194,11 @@ def train_GAF(model,
     model.to(device)
 
     # Check if wandb is imported
-    if wandb:
-        import os
-        import wandb
-
-        # Check if the WANDB_API key is in the environment variables
-        wandb_api_key = os.getenv('WANDB_API_KEY')
-        if not wandb_api_key:
-            raise RuntimeError("No WandB API key provided. Please set the 'WANDB_API' environment variable.")
+    if use_wandb:
+        try:
+            import wandb
+        except ImportError:
+            raise ImportError("Please install wandb to use use_wandb option. You can install it using 'pip install wandb'.")
 
     # Create dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
@@ -258,12 +234,18 @@ def train_GAF(model,
                               optimizer,
                               criterion,
                               list_of_microbatches=mbs,
-                              wandb=wandb,
                               verbose=verbose,
                               cos_distance_thresh=cos_distance_thresh,
                               device=device)
             running_loss += result['train_loss']
             count += 1
+
+            if verbose:
+                print(f'Epoch: {epoch:7d}, Iteration: {epoch:7d}, Train Loss: {result["train_loss"]:.9f}, Train Acc: {result["train_accuracy"]:.4f}, Costine Distance: {result["cosine_distance"]:.4f}, Agreement Count: {result["agreed_count"]:d}')
+
+            # Log to wandb
+            if wandb:
+                wandb.log(result)
 
         # Validation step
         model.eval()
@@ -287,12 +269,12 @@ def train_GAF(model,
         val_accuracy = sum([pred == label for pred, label in zip(all_preds, all_labels)]) / len(all_preds)
         message = {'epoch': epoch+1, 'train_loss': running_loss/max(count,1), 'val_loss': val_loss, 'train_accuracy': result['train_accuracy'], 'val_accuracy': val_accuracy.item()}
         
+        
         if verbose:
-            print(message)
+            print(f'Epoch: {epoch:7d}, Train Loss: {message["train_loss"]:.9f}, Train Acc: {message["train_accuracy"]:.4f}, Val Loss: {message["val_loss"]:.9f}, Val Acc: {message["val_accuracy"]:.4f}')
         # log to wandb
-        if wandb:
+        if use_wandb:
             try:
-                import wandb
                 wandb.log(message)
             except Exception as e:
                 print(f"Failed to log to wandb: {e}")
