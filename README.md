@@ -176,7 +176,7 @@ We also provide a shell script to run a sweep for convenience. The script spawns
 Example call:
 ```bash
 cd test
-chmod x+ run_sweeps.sh
+chmod +x run_sweeps.sh
 ./run_sweeps.sh
 ```
 
