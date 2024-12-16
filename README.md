@@ -43,7 +43,6 @@ pip install ".[all]"
 development dependencies, you can execute the following commands:
 
 ```bash
-```bash
 git clone https://github.com/Fchaubard/gradient_agreement_filtering.git
 cd gradient_agreement_filtering
 pip install ".[dev]"
