@@ -22,6 +22,14 @@ The package provides a number of features for the example implementation of GAF.
 
 There are a few ways to install the package and run the examples.
 
+**PyPI Installation**
+
+If you only with to take advantage of the package and not the examples, you can install the package via PyPI:
+
+```bash
+pip install gradient-agreement-filtering
+```
+
 **Local Installation**
 
 To install the package and run the examples locally you can execute the following commands:
@@ -48,14 +56,7 @@ cd gradient_agreement_filtering
 pip install ".[dev]"
 ```
 
-**PyPI Installation**
 
-If you only with to take advantage of the package and not the examples, you can install the package via PyPI:
-
-```bash
-pip install gradient-agreement-filtering
-```
-   
 
 ## Usage
 
