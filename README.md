@@ -180,14 +180,26 @@ chmod +x run_sweeps.sh
 ./run_sweeps.sh
 ```
 
+## BibTex
 
-## Acknowledgement
-
-To cite this work, please use the following BibTeX entry:
+If GAF is useful in your own research, please use the following BibTeX entry:
 
 ```
+@misc{chaubard2024gradientaveragingparalleloptimization,
+      title={Beyond Gradient Averaging in Parallel Optimization: Improved Robustness through Gradient Agreement Filtering}, 
+      author={Francois Chaubard and Duncan Eddy and Mykel J. Kochenderfer},
+      year={2024},
+      eprint={2412.18052},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2412.18052}, 
+}
+```
+
+## Acknowledgements
+
 We would like to acknowledge and thank Alex Tzikas, Harrison Delecki, and Francois Chollet who provided invaluable help through discussions and feedback.
-```
+
 
 ## License
 
