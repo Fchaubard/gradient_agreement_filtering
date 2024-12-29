@@ -4,7 +4,7 @@ This package implements the Gradient Agreement Filtering (GAF) optimization algo
 
 GAF is a novel optimization algorithm that improves gradient-based optimization by filtering out gradients of data batches that do not agree with each other and nearly eliminates the need for a validation set without risk of overfitting (even with noisy labels). It bolts on top of existing optimization procedures such as SGD, SGD with Nesterov momentum, Adam, AdamW, RMSProp, etc and outperforms in all cases. Full paper here:
 ```
-TODO: Insert arxiv paper link.
+https://arxiv.org/pdf/2412.18052
 ```
 
 ## Features
@@ -185,7 +185,7 @@ chmod +x run_sweeps.sh
 To cite this work, please use the following BibTeX entry:
 
 ```
-TODO
+We would like to acknowledge and thank Alex Tzikas, Harrison Delecki, and Francois Chollet who provided invaluable help through discussions and feedback.
 ```
 
 ## License
