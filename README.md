@@ -30,6 +30,14 @@ If you only with to take advantage of the package and not the examples, you can 
 pip install gradient-agreement-filtering
 ```
 
+**Conda Installation**
+
+If you only with to take advantage of the package and not the examples, you can install the package via conda:
+
+```bash
+conda install conda-forge::gradient-agreement-filtering
+```
+
 **Local Installation**
 
 To install the package and run the examples locally you can execute the following commands:
